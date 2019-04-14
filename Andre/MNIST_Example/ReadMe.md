@@ -10,7 +10,8 @@ model - define the model (LeNet architecture in this example), metrics (accuracy
 trainer - a class for training and logging traning metrics.   
 util - contains the logger base class as well as visualization using tensorboardX (optional).   
 config - a file to show which data_loader, model, loss, optimization, trainer, gpu, etc. are being used.   
-saved - a folder showing experiments, saved under the "name" config.json, then mmdd_HHMMSS timestamp.   
+saved - a folder showing experiments, saved under the "name" config.json, then mmdd_HHMMSS timestamp.  
+data - data to be used in the dataset (in this case data is downloaded at runtime using torchvision).   
 
 ## Customization
 This structure can be changed by adding classes data_loaders.py to accomodate new datasets, new architectures in models.py, and hyperparameter optimization in config.json. 
