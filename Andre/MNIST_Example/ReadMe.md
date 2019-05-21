@@ -21,3 +21,4 @@ This structure can be changed by adding classes data_loaders.py to accomodate ne
 - The traffic dataset is organized as a series of folders with images for training and testing. The csv file contains one column for the label and one column for the filename. The filename, image folder name, and label are all passed into the dataset class in databases.py. Training continues as expected. 
 - Note: all Jupyter notebooks are NOT up to date. I only check their functionality through the training stage, not the testing stage. 
 - the "data" and "saved" folders are not shown on this Github page due to memory concerns. New raw data should be saved as "data/datasetname/train/image001.jpg" and the csv file should be located at "data/datasetname/train.csv". The saved folder is described above and updated automatically. 
+- At this point in time, mnist_example.ipynb contains the simplest example, while traffic_example.ipynb contains the most implementable example for our purposes
