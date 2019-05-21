@@ -15,3 +15,8 @@ data - data to be used in the dataset (in this case data is downloaded at runtim
 
 ## Customization
 This structure can be changed by adding classes data_loaders.py to accomodate new datasets, new architectures in models.py, and hyperparameter optimization in config.json. 
+
+## Updates
+5/21/2019 Added examples for databases, dataloaders, configs, and Jupyter notebook for data in csv format (CIFAR10, MNIST from CSV), and using image paths with csv metadata (traffic data). The traffic dataset will be most similar to actual implementation. 
+- The traffic dataset is organized as a series of folders with images for training and testing. The csv file contains one column for the label and one column for the filename. The filename, image folder name, and label are all passed into the dataset class in databases.py. Training continues as expected. 
+- Note: all Jupyter notebooks are NOT up to date. I only check their functionality through the training stage, not the testing stage. 
