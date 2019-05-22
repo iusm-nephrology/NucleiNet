@@ -1,6 +1,6 @@
 # MNIST_Example 
 
-Note: the following is deprecated. Please see CellTemplate instead. 
+Note: the following is deprecated. Please see [CellTemplate](https://github.com/iusm-nephrology/DeepLearningHelloWorld/tree/master/Andre/CellTemplate) instead. 
 
 This example will show the organization and file structure for future deep learning projects. The Pytorch project template is based on the work done by [victoresque](https://github.com/victoresque/pytorch-template). 
 
