@@ -1,4 +1,7 @@
-# MNIST_Example  
+# MNIST_Example 
+
+Note: the following is deprecated. Please see CellTemplate instead. 
+
 This example will show the organization and file structure for future deep learning projects. The Pytorch project template is based on the work done by [victoresque](https://github.com/victoresque/pytorch-template). 
 
 Check the notebook for an example on training and testing.
@@ -22,3 +25,5 @@ This structure can be changed by adding classes data_loaders.py to accomodate ne
 - Note: all Jupyter notebooks are NOT up to date. I only check their functionality through the training stage, not the testing stage. 
 - the "data" and "saved" folders are not shown on this Github page due to memory concerns. New raw data should be saved as "data/datasetname/train/image001.jpg" and the csv file should be located at "data/datasetname/train.csv". The saved folder is described above and updated automatically. 
 - At this point in time, mnist_example.ipynb contains the simplest example, while traffic_example.ipynb contains the most implementable example for our purposes
+
+5/22/2019 Deprecated in favor of CellTemplate
