@@ -1,5 +1,9 @@
 This is my readme.md file
 
+# GUI Updates 6/11/2019 
+- run "python3 renalNeuralNet.py"
+- added support for data augmentation in config file
+- brought in functions from utilities in the master branch
 
 # GUI Updates 5/29/2019
 Requirements:
