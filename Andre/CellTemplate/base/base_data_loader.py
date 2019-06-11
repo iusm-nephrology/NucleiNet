@@ -27,9 +27,10 @@ class BaseDataLoader(DataLoader):
         super(BaseDataLoader, self).__init__(sampler=self.sampler, **self.init_kwargs)
 
     def _split_sampler(self, split):
+        split = float(split)
         if split == 0.0:
             return None, None
-
+        
         idx_full = np.arange(self.n_samples)
 
         np.random.seed(0)

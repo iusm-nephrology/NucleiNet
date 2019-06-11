@@ -3,12 +3,20 @@ import json
 import argparse
 import torch
 import data_loader.data_loaders as module_data
+import data_loader.augmenters as module_augmentation
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
 from trainer import Trainer
 from utils import Logger
-
+from utils import util
+from utils import torchsummary
+from utils import viewTraining
+from utils import lr_finder
+import importlib
+import math
+import torchvision
+print("Modules loaded")
 
 def get_instance(module, name, config, *args):
     return getattr(module, config[name]['type'])(*args, **config[name]['args'])
@@ -26,10 +34,16 @@ def visualize(dataloader):
         a.set_title("Label = " +str(labels[i].numpy()), fontsize=30)
 
 def main(config, resume):
+    print("================")
+    print("Beginning Training")
     train_logger = Logger()
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     # setup data_loader instances
+    augmentation = get_instance(module_augmentation, 'augmenter', config)
     data_loader = get_instance(module_data, 'data_loader', config)
+    data_loader.transforms = augmentation.transforms
+    data_loader.dataset.transforms = data_loader.apply_transforms()
     valid_data_loader = data_loader.split_validation()
 
     # build model architecture
@@ -42,7 +56,8 @@ def main(config, resume):
         print("Using CPU to train")
         
     # get function handles of loss and metrics
-    loss = getattr(module_loss, config['loss'])
+    loss = getattr(module_loss, config['loss']) #looks in model/loss.py for criterion function specified in config
+    criterion = loss(data_loader.dataset.weight.to(device)) # for imbalanced datasets
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
@@ -50,7 +65,7 @@ def main(config, resume):
     optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
     lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', config, optimizer)
 
-    trainer = Trainer(model, loss, metrics, optimizer,
+    trainer = Trainer(model, criterion, metrics, optimizer,
                       resume=resume,
                       config=config,
                       data_loader=data_loader,

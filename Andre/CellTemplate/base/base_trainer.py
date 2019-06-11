@@ -38,7 +38,11 @@ class BaseTrainer:
             self.mnt_mode = 'off'
             self.mnt_best = 0
         else:
-            self.mnt_mode, self.mnt_metric = self.monitor.split()
+            if isinstance(self.monitor, str):
+                self.mnt_mode, self.mnt_metric = self.monitor.split()
+            else:
+                self.mnt_mode = self.monitor[0]
+                self.mnt_metric = self.monitor[1]
             assert self.mnt_mode in ['min', 'max']
 
             self.mnt_best = math.inf if self.mnt_mode == 'min' else -math.inf
