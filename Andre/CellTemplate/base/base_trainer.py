@@ -11,6 +11,7 @@ from utils.visualization import WriterTensorboardX
 class BaseTrainer:
     """
     Base class for all trainers
+    BaseTrainer handles all aspects of training / logging except the logic for training a single epoch, which is handled in trainer.py
     """
     def __init__(self, model, loss, metrics, optimizer, resume, config, train_logger=None):
         self.config = config
@@ -33,7 +34,7 @@ class BaseTrainer:
         self.verbosity = cfg_trainer['verbosity']
         self.monitor = cfg_trainer.get('monitor', 'off')
 
-        # configuration to monitor model performance and save best
+        # configuration to monitor model performance and save best, used to also determine early stopping criteria
         if self.monitor == 'off':
             self.mnt_mode = 'off'
             self.mnt_best = 0
@@ -123,18 +124,19 @@ class BaseTrainer:
                     best = True
                 else:
                     not_improved_count += 1
+                    print("Model has not improved in -------------| " + str(not_improved_count) + " epochs")
 
                 if not_improved_count > self.early_stop:
                     self.logger.info("Validation performance didn\'t improve for {} epochs. "
                                      "Training stops.".format(self.early_stop))
                     break
-
-            if epoch % self.save_period == 0:
+            
+            if epoch % self.save_period == 0 or best:
                 self._save_checkpoint(epoch, save_best=best)
 
     def _train_epoch(self, epoch):
         """
-        Training logic for an epoch
+        Training logic for an epoch, handled in trainer.py
 
         :param epoch: Current epoch number
         """

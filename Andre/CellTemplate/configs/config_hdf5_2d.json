@@ -1,0 +1,67 @@
+{
+    "name": "IMPRS_hdf5_sumproj_mask",
+    "n_gpu": 1,
+    
+    "arch": {
+        "type": "heatmapModel64",
+        "args": {
+        "num_classes": 2
+        }
+    },
+    "data_loader": {
+        "type": "hdf5_2d_dataloader",
+        "args":{
+            "hdf5_path": "../data/imprs_hdf5/mask_sumproj_dataset.h5",
+            "shape": [32,32],
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.15,
+            "num_workers": 2,
+            "training": true
+        }
+    },
+    "data_loader_test": { 
+        "type": "hdf5_2d_dataloader",
+        "args":{
+            "hdf5_path": "../data/imprs_hdf5/mask_sumproj_dataset.h5",
+            "shape": [32,32],
+            "batch_size": 64,
+            "shuffle": false,
+            "validation_split": 0.0,
+            "num_workers": 2,
+            "training": false
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.0001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "my_metric", "f1", "balanced_accuracy", "precision", "recall"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 100,
+            "gamma": 0.25
+        }
+    },
+    "trainer": {
+        "epochs":500,
+        "save_dir": "../saved/",
+        "save_period": 100,
+        "verbosity": 1,
+        
+        "monitor": "min val_loss",
+        "early_stop": 500,
+        
+        "tensorboardX": false,
+        "log_dir": "../saved/runs"
+    }
+}
+

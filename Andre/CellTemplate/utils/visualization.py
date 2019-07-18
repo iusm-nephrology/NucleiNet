@@ -1,5 +1,8 @@
 import importlib
 
+'''
+Theoretically writes to TensorboardX and can be visualized on a server, but untested. 
+'''
 
 class WriterTensorboardX():
     def __init__(self, writer_dir, logger, enable):

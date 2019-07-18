@@ -6,6 +6,7 @@ import numpy as np
 class BaseModel(nn.Module):
     """
     Base class for all models
+    All models require an initialization and forward method, and __str__ is what is shown when print(model) is called
     """
     def __init__(self):
         super(BaseModel, self).__init__()

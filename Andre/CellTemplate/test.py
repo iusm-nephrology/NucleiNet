@@ -8,31 +8,17 @@ import model.metric as module_metric
 import model.model as module_arch
 from train import get_instance
 
-def visualizationOutGray(data, output, target, classes):
-    #view first image in each batch w/ its prediction and label
-    ig = plt.figure()
-    output_cpu = output.to(torch.device("cpu"))
-    target_cpu = target.to(torch.device("cpu"))
-    data_cpu = data.to(torch.device("cpu"))
-    output_idx = (np.argmax(output_cpu[0], axis=0)) #reverse one hot
-    cls = classes[output_idx]
-    plt.title("Prediction = " + str(cls) + " | Actual = " + str(classes[target_cpu[0].numpy()]) )
-    img = data_cpu[0]
-    plt.imshow(np.transpose(np.reshape(img, (1,28,28)), (1,2,0)).squeeze(), cmap = 'gray') # realign 
+def get_instance(module, name, config, *args):
+    return getattr(module, config[name]['type'])(*args, **config[name]['args'])
+
+def set_instance(module, name, config, *args):
+    setattr(module, config[name]['type'])(*args, **config[name]['args'])
     
-def visualizationOutColor(data, output, target, classes):
-    #view first image in each batch w/ its prediction and label
-    fig = plt.figure()
-    output_cpu = output.to(torch.device("cpu"))
-    target_cpu = target.to(torch.device("cpu"))
-    data_cpu = data.to(torch.device("cpu"))
-    idx = (np.argmax(output_cpu[0], axis=0))
-    cls = classes[idx]
-    plt.title("Prediction = " + str(cls) + " | Actual = " + str(classes[target_cpu[0].numpy()]) )
-    img = data_cpu[0]
-    plt.imshow(np.transpose(np.reshape(img,(3, 32,32)), (1,2,0))) #un-normalize and realign    
-                
 def main(config, resume):
+    # set visualization preference
+    outputOverlaycsv = False
+    showHeatMap = False
+    
     # setup data_loader instances
     data_loader = get_instance(module_data, 'data_loader_test', config)
     '''
@@ -48,7 +34,7 @@ def main(config, resume):
 
     # build model architecture
     model = get_instance(module_arch, 'arch', config)
-    model.summary()
+    print(model)
     if torch.cuda.is_available():
         print("Using GPU: " + torch.cuda.get_device_name(0))
     else:
@@ -72,11 +58,39 @@ def main(config, resume):
 
     total_loss = 0.0
     total_metrics = torch.zeros(len(metric_fns))
-
+    
+    #classes = ('endothelium', 'pct', 'vasculature')
+    classes = ('endothelium', 'pct')
+    all_pred = []
+    all_true = []
+    all_softmax = []
+    
+    
+    if showHeatMap:
+        hm_layers = {'final_layer': 'layer', 'fc_layer': 'fc_layer', 'conv_num': 17, 'fc_num': 3} #need to set based on model
+        heatmapper = classActivationMap.CAMgenerator(hm_layers, config, model)
+        #heatmapper = classActivationMap.CAMgenerator3d(hm_layers, config, model)  #for 3d data
+        heatmapper.generateImage(num_images=10)
+    
     with torch.no_grad():
         for i, (data, target) in enumerate(tqdm(data_loader)):
             data, target = data.to(device), target.to(device)
             output = model(data)
+            image = np.squeeze(data[0].cpu().data.numpy())
+            label = np.squeeze(target[0].cpu().data.numpy())
+            all_true.extend(target.cpu().data.numpy())
+            all_pred.extend(np.argmax(output.cpu().data.numpy(), axis=1))
+            m = torch.nn.Softmax(dim=0)
+            for row in output.cpu():
+                sm = m(row)
+                all_softmax.append(sm.data.numpy())
+                
+            if i < 2:
+                m = torch.nn.Softmax(dim=0)
+                print("prediction percentages")
+                print(m(output.cpu()[0]))
+                print(all_true[i])
+                all_softmax.extend(m(output.cpu()))
             #
             # save sample images, or do something with output here
             #
@@ -87,11 +101,32 @@ def main(config, resume):
             total_loss += loss.item() * batch_size
             for i, metric in enumerate(metric_fns):
                 total_metrics[i] += metric(output, target) * batch_size
-
+    
+    if outputOverlaycsv:
+        ids = data_loader.dataset.getIds()
+        softmax = pd.DataFrame(all_softmax)
+        #ids = ids[:,1].reshape(ids.shape[0], 1)
+        print(ids[0:5])
+        print(ids.shape)
+        print(softmax.shape)
+        frames = [ids, softmax, pd.DataFrame(all_true)]
+        output_data= np.concatenate(frames, axis=1)
+        print(output_data.shape)
+        output_df = pd.DataFrame(output_data)
+        output_df.to_csv('overlaycsv.csv', index=False,  header=False)
+        
     n_samples = len(data_loader.sampler)
+    print("num test images = " + str(n_samples))
     log = {'loss': total_loss / n_samples}
     log.update({met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)})
-    print(log)
+    for key in log:
+        print("{} = {:.4f}".format(key, log[key]))
+    #print(log)
+    log['classes'] = classes
+    log['test_targets'] = all_true
+    log['test_predictions'] = all_pred
+    print("My_metric is accuracy")
+    util.plot_confusion_matrix(all_true, all_pred, classes=classes, normalize=False)
 
 
 if __name__ == '__main__':
