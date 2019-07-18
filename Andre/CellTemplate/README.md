@@ -1,4 +1,8 @@
 This is my readme.md file
+
+# upate 07/18/19
+- alpha version 0.1 uploaded
+
 # update 06/06/2019
 - added statistics and visualization packages in util
 - implemented pretrained networks in model using resnet on upsampled images
