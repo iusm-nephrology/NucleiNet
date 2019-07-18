@@ -6,7 +6,7 @@ This example will show the organization and file structure for future deep learn
 ## upate 07/18/19
 - alpha version 0.1 uploaded
 - current datasets contain > 6000 images
-- training accuracy > 90% 
+- test accuracy > 90% 
 - 2D and 3D images can be used
 
 ## update 06/06/2019
