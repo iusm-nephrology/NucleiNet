@@ -11,9 +11,7 @@ import h5py
 import random
 print("Modules loaded")
 
-'''
-converts a folder with CSV files with the format label,ID,pixels to an HDF5 separating each file into train and test, this ensures there is even representation of each csv in the test dataset. If different CSV files have already been split, simply change the train/test split to 1.0 or 0.0, and create 2 separate HDF5
-'''
+#python C:\Users\awoloshu\Documents\IMPRS\datasets\toHDF5.py -d C:\Users\awoloshu\Documents\IMPRS\datasets\F44_062419\allDAPI_volume -f mydata_test.h5
 
 def list_files(directory):
     """Returns all files in a given directory
@@ -24,6 +22,7 @@ def list_dirs(directory):
     """Returns all directories in a given directory
     """
     return [f for f in pathlib.Path(directory).iterdir() if f.is_dir()]
+
 
 def main(args):
     if args.dir == None: args.dir = "./"
@@ -49,8 +48,7 @@ def main(args):
         train_ind = imgs[int(num_imgs*args.split+1.0) :]
         
         img_start = 1
-        #check if there are serial ID numbers in column 2
-        if (csv_data.iloc[:,1].max() > 256).any: 
+        if (csv_data.iloc[:,1].max() > 256).any:
             img_start = 2
             ids = csv_data.iloc[test_ind,1].to_numpy()
             ids = ids.reshape(ids.shape[0], 1)
@@ -63,9 +61,14 @@ def main(args):
         test_img = csv_data.iloc[test_ind,img_start:] #first column is label
         test_img = test_img.dropna(axis=1)
         test_label = csv_data.iloc[test_ind,0]
-        if (train_img.max() < 128).any(): #convert signed to unsigned bytes
-            train_img = train_img + 128
-            test_img = test_img+128
+        if (train_img.min() < 0).any(): #convert signed to unsigned bytes
+            train_img = train_img + 0
+            test_img = test_img+0
+            mask = train_img < 0
+            train_img[mask] = train_img + 256
+            mask = test_img < 0
+            test_img[mask] = test_img + 256
+            
         print(train_img.shape)
         print(test_img.shape)
         store.append('train_data', train_img)
@@ -78,6 +81,24 @@ def main(args):
         num_images_test = num_images_test + test_img.shape[0]
         count = count +1
         del csv_data
+        '''
+        count = 0
+        if count == 0:
+            
+            # Note: will generate warnings if filename contains a "."
+            train_img.to_hdf(filename, 'train_data',mode='a', format='table')
+            test_img.to_hdf(filename, 'test_data',mode='a', format='table')
+            train_label.to_hdf(filename, 'train_labels',mode='a', format='table')
+            test_label.to_hdf(filename, 'test_labels',mode='a', format='table')
+            
+            count = count
+        else:
+           
+            train_img.to_hdf(filename, 'train_data',mode='a', append=True)
+            test_img.to_hdf(filename, 'train_data',mode='a', append=True)
+            train_label.to_hdf(filename, 'train_labels',mode='a', append=True)
+            test_label.to_hdf(filename, 'test_labels',mode='a', append=True)
+            '''
             
 
     metadata = pd.DataFrame({'TrainingNum': num_images_train, 'TestingNum': num_images_test, \
