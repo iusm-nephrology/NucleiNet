@@ -1,0 +1,1 @@
+cmd /k python C:\Users\awoloshu\Documents\CellTemplate\train.py -c "C:\Users\awoloshu\Documents\CellTemplate\configs\config_hdf5.json"
