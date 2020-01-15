@@ -95,10 +95,13 @@ class HyperOptim():
         """
         best_configs = []
         results = {}
+        list_s = reversed(range(self.s_max+1))
         if earlyStop:
             skipLast = 0
+            list_s = [self.s_max]
         # finite horizon outerloop
-        for s in reversed(range(self.s_max + 1)):
+        
+        for s in list_s:
             # initial number of configs
             n = int(
                 np.ceil(
@@ -143,8 +146,7 @@ class HyperOptim():
                     #T = [T[k] for k in sort_loss_idx if not T[k].early_stopped]
                     T = [T[k] for k in sort_loss_idx]
                     tqdm.write("Left with: {}".format(len(T)))
-                if earlyStop:
-                    break
+
             best_idx = np.argmin(val_losses)
             # i could get the parameters from T[idx].params, then use that to predict what the starting values should be for S
             best_configs.append([T[best_idx], val_losses[best_idx]])

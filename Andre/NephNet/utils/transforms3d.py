@@ -1,7 +1,7 @@
 import importlib
 import numpy as np
 import torch
-from scipy.ndimage import rotate, map_coordinates, gaussian_filter
+from scipy.ndimage import rotate, map_coordinates, gaussian_filter, shift
 from scipy.ndimage.filters import convolve
 from skimage.filters import gaussian
 from skimage.segmentation import find_boundaries
@@ -35,7 +35,24 @@ class shotNoise:
         else:
             return m
 
-
+class Translate:
+    def __init__(self,random_state, pixels = 5, execution_prob = 0.2):
+        self.pixels = pixels
+        self.rs = random_state
+        self.execution_prob = execution_prob
+        '''
+        moves by a factor of a number of pixels
+        '''
+    def __call__(self, m):
+        assert m.ndim in [3, 4], 'Supports only 3D (DxHxW) or 4D (CxDxHxW) images'
+        original_shape = m.shape
+        if self.rs.uniform() < self.execution_prob:
+            x = int(self.rs.uniform(-self.pixels, self.pixels))
+            y = int(self.rs.uniform(-self.pixels, self.pixels))
+            z = int(self.rs.uniform(-self.pixels / m.shape[1] * m.shape[0], self.pixels / m.shape[1] * m.shape[0])) #scale to z ratio
+            m = shift(m, (z,x,y), order=3, mode='constant', cval=0.0, prefilter=True)
+        
+        return m 
 
 class Downsample:
     def __init__(self,random_state, factor = 2.0, order = 3):
@@ -150,7 +167,7 @@ class RandomContrast:
 
     def __call__(self, m):
         if self.random_state.uniform() < self.execution_probability:
-            brightness_factor = self.factor + self.random_state.uniform()
+            brightness_factor = self.factor + self.random_state.uniform(high = 0.5)
             return np.clip(m * brightness_factor, 0, 255)
 
         return m

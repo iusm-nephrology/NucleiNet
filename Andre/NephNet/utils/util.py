@@ -40,7 +40,7 @@ def visualizeBatch(dataloader, normalized):
         img = np.squeeze(img.numpy())
         
         lab = np.squeeze(labels[0])
-        classes = ['pct', 'tal', 'dct', 'cd', 'cd45', 'nestin', '31glom', '31int']
+        classes = ['s1', 'pct', 'tal', 'dct', 'cd', 'cd45', 'nestin', '31glom', '31int']
         def update_layer(layer = 0):
             plt.imshow(img[layer], cmap ='gray')
             plt.show()
@@ -174,8 +174,8 @@ def plot_confusion_matrix_combinePCT(y_true, y_pred, classes,
     
     y_true = np.array(y_true).astype(int).reshape(-1)
     y_pred = np.array(y_pred).astype(int).reshape(-1)
-    y_true[y_true == 1] = 2
-    y_pred[y_pred == 1] = 2
+    y_true[y_true == 0] = 1
+    y_pred[y_pred == 0] = 1
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -188,6 +188,12 @@ def plot_confusion_matrix_combinePCT(y_true, y_pred, classes,
 
     # Compute confusion matrix
     cm = confusion_matrix(y_true, y_pred)
+    
+    accs = []
+    for i, row in enumerate(cm):
+        accs.append(cm[i,i] / np.sum(row))
+    print("Calculated balanced accuracy after combining PCT: " + str(np.mean(accs)))
+    
     # Only use the labels that appear in the data
     class_list = []
     for item in unique_labels(y_true, y_pred): class_list.append(classes[item])

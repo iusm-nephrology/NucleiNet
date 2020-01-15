@@ -77,6 +77,7 @@ class LRFinder(object):
         step_mode="exp",
         smooth_f=0.05,
         diverge_th=5,
+        num_epochs = 10
     ):
         """Performs the learning rate range test.
 
@@ -103,6 +104,7 @@ class LRFinder(object):
         self.history = {"lr": [], "loss": []}
         self.best_loss = None
         self.best_lr = None
+        self.num_epochs = num_epochs
         if val_loader: print("Using validation loss")
         # Move the model to the proper device
         self.model.to(self.device)
@@ -129,7 +131,7 @@ class LRFinder(object):
                 inputs, labels = next(iterator)
 
             # Train on batch and retrieve loss
-            loss = self._train_batch(inputs, labels)
+            loss = self._train_batch(inputs, labels, train_loader)
             if val_loader:
                 
                 loss = self._validate(val_loader)
@@ -156,24 +158,34 @@ class LRFinder(object):
 
         print("Learning rate search finished. See the graph with {finder_name}.plot()")
 
-    def _train_batch(self, inputs, labels):
+    def _train_batch(self, inputs, labels, train_loader):
         # Set model to training mode
         self.model.train()
-
+        total_loss = 0
+        for epoch in range(0, self.num_epochs):
+            for batch_idx, (data, target) in enumerate(train_loader):
+                data, target = data.to(self.device), target.to(self.device)
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+                total_loss += loss.item()
         # Move data to the correct device
-        inputs = inputs.to(self.device)
-        labels = labels.to(self.device)
+        #inputs = inputs.to(self.device)
+        #labels = labels.to(self.device)
 
         # Forward pass
-        self.optimizer.zero_grad()
-        outputs = self.model(inputs)
-        loss = self.criterion(outputs, labels)
+        #self.optimizer.zero_grad()
+        #outputs = self.model(inputs)
+        #loss = self.criterion(outputs, labels)
 
         # Backward pass
-        loss.backward()
-        self.optimizer.step()
+        #loss.backward()
+        #self.optimizer.step()
 
-        return loss.item()
+        #return loss.item()
+        return total_loss
 
     def _validate(self, dataloader):
         # Set model to evaluation mode and disable gradient computation

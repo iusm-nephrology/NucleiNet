@@ -1,20 +1,20 @@
 {
-    "name": "3d_all_9class_SGD",
+    "name": "inceptionTest",
     "n_gpu": 1,
     
     "arch": {
-        "type": "threeDmodel",
+        "type": "Inception3D",
         "args": {
-        "num_classes": 9,
-        "num_feature": 76   
+        "num_classes": 7,
+        "num_feature": 24   
         }
     },
     "data_loader": {
         "type": "hdf5_3d_dataloader",
         "args":{
-            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/f33f44combined_noCNT/3d_all/f33f44combined_noCNT_3d_all.h5",
+            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/tubules_only/3d_all/dataset.h5",
             "shape": [7,32,32],
-            "batch_size": 256,
+            "batch_size": 64,
             "shuffle": true,
             "validation_split": 0.15,
             "num_workers": 0,
@@ -25,7 +25,7 @@
     "data_loader_test": { 
         "type": "hdf5_3d_dataloader",
         "args":{
-            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/f33f44combined_noCNT/3d_all/f33f44combined_noCNT_3d_all.h5",
+            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/tubules_only/3d_all/dataset.h5",
             "shape": [7,32,32],
             "batch_size": 64,
             "shuffle": false,
@@ -37,9 +37,9 @@
     "optimizer": {
         "type": "SGD",
         "args":{
-            "lr": 0.016,
-            "weight_decay": 0.006,
-            "momentum": 0.8,
+            "lr": 0.01,
+            "weight_decay": 0.0,
+            "momentum": 0.9,
             "nesterov": true
         }
     },
@@ -50,8 +50,8 @@
     "lr_scheduler": {
         "type": "ReduceLROnPlateau",
         "args": {
-            "patience": 8,
-            "factor": 0.29
+            "patience": 15,
+            "factor": 0.2
         }
     },
     "trainer": {
@@ -61,7 +61,7 @@
         "verbosity": 1,
         
         "monitor": "min val_loss",
-        "early_stop": 500,
+        "early_stop": 100,
         
         "tensorboardX": false,
         "log_dir": "../saved/runs"

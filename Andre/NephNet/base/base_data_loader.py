@@ -25,7 +25,7 @@ class BaseDataLoader(DataLoader):
             'shuffle': self.shuffle,
             'collate_fn': collate_fn,
             'num_workers': num_workers,
-            'drop_last': True
+            'drop_last': False
         }
         super(BaseDataLoader, self).__init__(sampler=self.sampler,pin_memory=True, **self.init_kwargs)
 
