@@ -17,6 +17,7 @@ from utils import torchsummary
 from utils import viewTraining
 from utils import lr_finder
 from utils import classActivationMap
+import utils.adabound as adabound
 import importlib
 import math
 import torchvision
@@ -32,6 +33,8 @@ def get_instance(module, name, config, *args):
 
 def main(config, resume):
     torch.backends.cudnn.benchmark = True
+    os.environ["OMP_NUM_THREADS"] = "8"
+    os.environ["NUMEXPR_MAX_THREADS"] = "16"
     print("GPUs available: " + str(torch.cuda.device_count()))
     os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
     train_logger = Logger()
@@ -57,7 +60,10 @@ def main(config, resume):
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
+    if config['optimizer']['type'] == "adabound":
+        optimizer = getattr(adabound, "AdaBound")(trainable_params, **config['optimizer']['args'])
+    else:
+        optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
     lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', config, optimizer)
 
     trainer = Trainer(model, criterion, metrics, optimizer,

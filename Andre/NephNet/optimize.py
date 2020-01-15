@@ -63,7 +63,7 @@ def main(config, resume):
     results = ho.tune(1, earlyStop = True)
     print(results)
     pickle_out = open("optimization.txt", "w")
-    pickle_out.write(results)
+    pickle_out.write(str(results))
     pickle_out.close()
     
 if __name__ == '__main__':

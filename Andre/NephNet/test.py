@@ -1,6 +1,7 @@
 import os
 import argparse
 import torch
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
@@ -16,6 +17,7 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 import math
 from utils import util
+import pandas as pd
 
 def get_instance(module, name, config, *args):
     return getattr(module, config[name]['type'])(*args, **config[name]['args'])
@@ -29,19 +31,22 @@ def main(config, resume):
     os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    outputOverlaycsv = False
+    outputOverlaycsv = True
     showHeatMap = False
     
     # setup data_loader instances
     data_loader = get_instance(module_data, 'data_loader_test', config)
+    
     '''
     data_loader = getattr(module_data, config['data_loader']['type'])(
-        config['data_loader']['args']['data_dir'],
-        batch_size=512,
+        config['data_loader']['args']['hdf5_path'],
+        batch_size=64,
         shuffle=False,
         validation_split=0.0,
         training=False,
-        num_workers=2
+        num_workers=0,
+        projected = True,
+        shape = [32,32]
     )
     '''
 
@@ -55,7 +60,8 @@ def main(config, resume):
         
     # get function handles of loss and metrics
     loss_fn = getattr(module_loss, config['loss'])
-    criterion = loss_fn(data_loader.dataset.weight.to(device)) # for imbalanced datasets
+    criterion = loss_fn(None)
+    #criterion = loss_fn(data_loader.dataset.weight.to(device)) # for imbalanced datasets
     
     metric_fns = [getattr(module_metric, met) for met in config['metrics']]
 
@@ -75,8 +81,9 @@ def main(config, resume):
     total_metrics = torch.zeros(len(metric_fns))
     
     #classes = ('endothelium', 'pct', 'vasculature')
-    classes = ('PCT', 'TAL', 'DCT', 'CD', 'cd45', 'nestin', 'cd31_glom', 'cd31_inter')
+    classes = ('S1', 'PCT', 'TAL', 'DCT', 'CD', 'cd45', 'nestin', 'cd31_glom', 'cd31_inter')
     all_pred = []
+    all_pred_k = []
     all_true = []
     all_softmax = []
     
@@ -89,23 +96,31 @@ def main(config, resume):
     
     with torch.no_grad():
         for i, (data, target) in enumerate(tqdm(data_loader)):
+            k=2
             data, target = data.to(device), target.to(device)
             output = model(data)
             image = np.squeeze(data[0].cpu().data.numpy())
             label = np.squeeze(target[0].cpu().data.numpy())
             all_true.extend(target.cpu().data.numpy())
             all_pred.extend(np.argmax(output.cpu().data.numpy(), axis=1))
+            mypred = torch.topk(output, k, dim=1)[1]
+            all_pred_k.extend( mypred.cpu().data.numpy())
             m = torch.nn.Softmax(dim=0)
             for row in output.cpu():
                 sm = m(row)
                 all_softmax.append(sm.data.numpy())
                 
-            if i < 2:
+            if i < 1:
                 m = torch.nn.Softmax(dim=0)
                 print("prediction percentages")
                 print(m(output.cpu()[0]))
                 print(all_true[i])
-                all_softmax.extend(m(output.cpu()))
+                plt.figure()
+                plt.imshow(image[3], cmap = 'gray')
+                plt.title("Label is " + classes[np.argmax(m(output.cpu()[0]))])
+                plt.pause(0.1)
+            
+                #all_softmax.extend(m(output.cpu()))
             #
             # save sample images, or do something with output here
             #
@@ -116,19 +131,31 @@ def main(config, resume):
             total_loss += loss.item() * batch_size
             for i, metric in enumerate(metric_fns):
                 total_metrics[i] += metric(output.cpu(), target.cpu()) * batch_size
-    
+        
+        correct = 0
+        all_pred_k = np.array(all_pred_k)
+        print(all_pred_k.shape)
+        all_pred_k = torch.from_numpy(all_pred_k)
+        all_true_k = torch.from_numpy(np.array(all_true))
+        for i in range(k):
+            correct += torch.sum(all_pred_k[:, i] == all_true_k).item()
+        print("TOP 2 ACCURACY: {}".format(correct / len(all_true)))    
     if outputOverlaycsv:
         ids = data_loader.dataset.getIds()
         softmax = pd.DataFrame(all_softmax)
         #ids = ids[:,1].reshape(ids.shape[0], 1)
+        num_test = len(all_true)
+        ids = ids[:num_test]
         print(ids[0:5])
         print(ids.shape)
         print(softmax.shape)
+        print(len(all_true))
         frames = [ids, softmax, pd.DataFrame(all_true)]
         output_data= np.concatenate(frames, axis=1)
         print(output_data.shape)
         output_df = pd.DataFrame(output_data)
-        output_df.to_csv('overlaycsv.csv', index=False,  header=False)
+        filename = "overlaycsv_" + config['name'] + ".csv"
+        output_df.to_csv(filename, index=False,  header=False)
         
     n_samples = len(data_loader.sampler)
     print("num test images = " + str(n_samples))
@@ -141,6 +168,7 @@ def main(config, resume):
     log['test_targets'] = all_true
     log['test_predictions'] = all_pred
     print("CM will show aggregation of PCT classes")
+    
     util.plot_confusion_matrix_combinePCT(all_true, all_pred, classes=classes, normalize=False)
 
 
@@ -149,6 +177,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-r', '--resume', default=None, type=str,
                         help='path to latest checkpoint (default: None)')
+    parser.add_argument('-t', '--test', default=None, type=str,
+                        help='path to test h5 (default: None)')
     parser.add_argument('-d', '--device', default=None, type=str,
                         help='indices of GPUs to enable (default: all)')
 
@@ -156,6 +186,10 @@ if __name__ == '__main__':
 
     if args.resume:
         config = torch.load(args.resume)['config']
+    if args.test:
+        config['data_loader_test']['args']['hdf5_path'] = args.test
+        config['data_loader_test']['args']['mean'] = 15.59
+        config['data_loader_test']['args']['stdev'] = 15.59
     if args.device:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
 
