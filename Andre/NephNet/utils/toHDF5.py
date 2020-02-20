@@ -61,8 +61,9 @@ def main(args):
             store.append('test_ids', pd.DataFrame(ids))
         
         pix_length = len(csv_data.iloc[0, img_start:])
-        if pix_length != 7168:
-            print("Image is {} pixels long, changing to 7168 pixels".format(pix_length))
+        num_pixels = 7168
+        if pix_length != num_pixels: 
+            print("Image is {} pixels long, changing to {} pixels".format(pix_length, num_pixels))
             img_end = -1
         else:
             img_end = pix_length + img_start

@@ -55,20 +55,25 @@ class Translate:
         return m 
 
 class Downsample:
-    def __init__(self,random_state, factor = 2.0, order = 3):
+    def __init__(self,random_state, factor = 2.0, order = 3, execution_prob = 0.2):
         self.factor = 1.0 / factor
         self.order = order
+        self.execution_prob = execution_prob
+        self.rs = random_state
         '''
         downsamples by a factor and then resizes image to match the original input
         '''
     def __call__(self, m):
         assert m.ndim in [3, 4], 'Supports only 3D (DxHxW) or 4D (CxDxHxW) images'
         original_shape = m.shape
-        new_array = zoom(m, self.factor, order=self.order) #reduce dimensions e.g. 32x32 --> 16x16
+        new_array = zoom(m, (1, self.factor,self.factor), order=self.order) #reduce dimensions e.g. 32x32 --> 16x16
         new_factor = [0,0,0]
         for i in range(m.ndim):
             new_factor[i] = m.shape[i] / new_array.shape[i]
-        downsampled_array = zoom(new_array, tuple(new_factor), order=self.order) #16x16--> 32x32
+        if self.rs.uniform() < self.execution_prob:
+            downsampled_array = zoom(new_array, tuple(new_factor), order=self.order) #16x16--> 32x32
+        else:
+            downsampled_array = m
         return downsampled_array 
 
 class RandomFlip:
@@ -78,16 +83,17 @@ class RandomFlip:
     otherwise the models won't converge.
     """
 
-    def __init__(self, random_state, **kwargs):
+    def __init__(self, random_state, execution_prob = 0.2, **kwargs):
         assert random_state is not None, 'RandomState cannot be None'
         self.random_state = random_state
         self.axes = (0, 1, 2)
+        self.execution_prob = execution_prob
 
     def __call__(self, m):
         assert m.ndim in [3, 4], 'Supports only 3D (DxHxW) or 4D (CxDxHxW) images'
 
         for axis in self.axes:
-            if self.random_state.uniform() > 0.5:
+            if self.random_state.uniform() < self.execution_prob:
                 if m.ndim == 3:
                     m = np.flip(m, axis)
                 else:
@@ -167,7 +173,7 @@ class RandomContrast:
 
     def __call__(self, m):
         if self.random_state.uniform() < self.execution_probability:
-            brightness_factor = self.factor + self.random_state.uniform(high = 0.5)
+            brightness_factor = self.random_state.uniform(low = self.factor, high = 2-self.factor)
             return np.clip(m * brightness_factor, 0, 255)
 
         return m
