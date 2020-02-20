@@ -27,7 +27,7 @@ class hdf5dataset(Dataset):
     '''
     Reads an HDF5 file with the following keys: train_data, train_labels, test_data, test_labels, test_ids. Train_data is a vector which is reshped to fit the shape variable. Works for both 2D and 3D input
     '''
-    def __init__(self, h5_path, shape = (7,32,32), training = True, transforms=None, projection = False):
+    def __init__(self, h5_path, shape = (7,32,32), training = True, transforms=None, projection = False, sliced = False):
         st = pd.HDFStore(h5_path)
         self.store = st
         if training:
@@ -40,6 +40,7 @@ class hdf5dataset(Dataset):
         self.data_len = self.data.shape[0]
         self.shape = shape
         self.projection = projection
+        self.sliced = sliced
         #print(type(self.data))
         # weight the classes by 1/#examples * maximum #examples, note that labels should start at 1
         # for example if the number of examples = [10, 50, 100] then self.weight = [10, 2, 1]
@@ -85,19 +86,25 @@ class hdf5dataset(Dataset):
         #print(str(np.amin(img)))
         '''
         if self.projection:
+        #max projection
             img = np.amax(img, axis = 0)
         '''
+        if self.projection:
+            #sum projection
+            img = np.sum(img, axis=0)
+            img = img / np.amax(img)
+            
         label = self.label[index] - 1 #labeling starts at 0 for CNN
         
         
         # Perform augmentation. The data loader differentiates between training and test transformations, this simply sends the batch to receive the transformations
         if self.transforms is not None:
-            if len(self.shape) > 2 and not self.projection: #3D input
+            if len(self.shape) > 2 and not self.projection and not self.sliced: #3D input
                 for transform in self.transforms:
                     img = transform(img)
                 img_as_tensor = img
                 #img_as_tensor = img_as_tensor.type(torch.FloatTensor)
-            elif self.projection:
+            elif self.projection and False: #REMOVE FALSE FOR RESIZE
                 img_as_img = Image.fromarray(img) #convert to PIL
                 img_as_img = img_as_img.resize((60,60), resample=Image.NEAREST)
                 img_as_img = img_as_img.resize((100,100), resample=Image.NEAREST)
@@ -109,6 +116,7 @@ class hdf5dataset(Dataset):
                 img_as_tensor = self.transforms(new_image)
             else: #2D input
                 image = img.astype(float)
+                if self.sliced: image = image[2]
                 img_as_img = Image.fromarray(image)
                 img_as_tensor = self.transforms(img_as_img)
         return img_as_tensor, label
