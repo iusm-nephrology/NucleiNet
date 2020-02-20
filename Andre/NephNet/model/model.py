@@ -172,7 +172,7 @@ class myCustomModel(BaseModel):
 class pretrainedModel(BaseModel):
     def __init__(self, num_classes = 2):
         super(pretrainedModel, self).__init__()
-        resnet = models.resnet152(pretrained=True)
+        resnet = models.resnet34(pretrained=True)
         resnet.train()
         for param in resnet.parameters():
             param.requires_grad = False
