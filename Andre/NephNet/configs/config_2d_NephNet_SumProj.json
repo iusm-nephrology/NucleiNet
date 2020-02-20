@@ -1,0 +1,76 @@
+{
+    "name": "2d_sum_NephNet",
+    "n_gpu": 1,
+    
+    "arch": {
+        "type": "heatmapModel64",
+        "args": {
+        "num_classes": 11,
+        "num_feature": 32
+        }
+    },
+    "data_loader": {
+        "type": "hdf5_2d_dataloader",
+        "args":{
+            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/NephNet/3d_all/combine_all/dataset.h5",
+            "shape": [7,32,32],
+            "batch_size": 16,
+            "shuffle": true,
+            "projected": true,
+            "validation_split": 0.15,
+            "num_workers": 0,
+            "training": true,
+            "mean": 0,
+            "stdev":1
+        }
+    },
+    "data_loader_test": { 
+        "type": "hdf5_2d_dataloader",
+        "args":{
+            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/NephNet/3d_all/combine_all/dataset.h5",
+            "shape": [7,32,32],
+            "batch_size": 256,
+            "shuffle": false,
+            "projected": true,
+            "validation_split": 0.0,
+            "num_workers": 0,
+            "training": false,
+            "mean": 0,
+            "stdev": 1
+        }
+    },
+    "optimizer": {
+        "type": "SGD",
+        "args":{
+            "lr": 0.0004144,
+            "weight_decay": 0.0058,
+            "momentum": 0.9,
+            "nesterov": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "balanced_accuracy", "f1"
+    ],
+    "lr_scheduler": {
+        "type": "ReduceLROnPlateau",
+        "args": {
+            "factor": 0.489,
+            "patience": 15,
+            "min_lr": 1e-6
+        }
+    },
+    "trainer": {
+        "epochs":500,
+        "save_dir": "C:/Users/awoloshu/Documents/NephNet/saved/",
+        "save_period": 100,
+        "verbosity": 1,
+        
+        "monitor": "min val_loss",
+        "early_stop": 500,
+        
+        "tensorboardX": false,
+        "log_dir": "../saved/runs"
+    }
+}
+
