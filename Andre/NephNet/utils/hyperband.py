@@ -25,7 +25,6 @@ from utils import util
 from utils import torchsummary
 from utils import viewTraining
 from utils import lr_finder
-import logging
 from utils import classActivationMap
 
 '''
@@ -52,9 +51,7 @@ class HyperOptim():
         self.args = args
         self.params = params
         self.config = config
-        logging.basicConfig(format='%(asctime)s - %(message)s', filename = 'optimization.log', filemode = 'w', level=logging.INFO)
-        logger = logging.getLogger(__name__)
-        self.logger = logger
+
         # hyperband params
         self.num_gpu = args.num_gpu
         self.epoch_scale = args.epoch_scale
@@ -68,9 +65,7 @@ class HyperOptim():
                 self.max_iter, self.eta, self.B
             )
         )
-        logger.info("[*] max_iter: {}, eta: {}, B: {}".format(
-                self.max_iter, self.eta, self.B
-            ))
+        
         # device
         self.device = torch.device("cuda" if self.num_gpu > 0 else "cpu")
         
@@ -88,19 +83,18 @@ class HyperOptim():
         
 
 
-    def tune(self, skipLast, earlyStop=False):
+    def tune(self, skipLast, earlyStop = False):
         """
         Tune the hyperparameters of the pytorch model
         using Hyperband.
         """
         best_configs = []
         results = {}
-        list_s = reversed(range(self.s_max+1))
+        list_s = reversed(range(self.s_max + 1))
         if earlyStop:
             skipLast = 0
             list_s = [self.s_max]
         # finite horizon outerloop
-        
         for s in list_s:
             # initial number of configs
             n = int(
@@ -116,7 +110,7 @@ class HyperOptim():
 
             tqdm.write("s: {}".format(s))
 
-            for i in range(s + 1 - int(skipLast)): #remove +1 to get rid of last iteration (e.g. 1 model trained for max iterations)
+            for i in range(s + 1 - int(skipLast)):
                 n_i = int(n * self.eta ** (-i))
                 r_i = int(r * self.eta ** (i))
 
@@ -124,9 +118,7 @@ class HyperOptim():
                     "[*] {}/{} - running {} configs for {} iters each".format(
                         i+1, s+1, len(T), r_i)
                 )
-                self.logger.info("[*] {}/{} - running {} configs for {} iters each".format(
-                        i+1, s+1, len(T), r_i)
-                )
+
                 
                 # Todo: add condition for all models early stopping
 
@@ -148,21 +140,20 @@ class HyperOptim():
                     tqdm.write("Left with: {}".format(len(T)))
 
             best_idx = np.argmin(val_losses)
-            # i could get the parameters from T[idx].params, then use that to predict what the starting values should be for S
             best_configs.append([T[best_idx], val_losses[best_idx]])
 
         best_idx = np.argmin([b[1] for b in best_configs])
         best_model = best_configs[best_idx]
+        print(best_model)
         results["val_loss"] = best_model[1]
         results["params"] = best_model #best_model[0].params
         results["str"] = best_model[0].__str__()
-        self.logger.info(results)
         return results
     
     
     def run_config(self, t, r_i):# Initialize random trainer
-        rand_params = t
         print(t)
+        rand_params = t
         train_logger = Logger()
         data_loader = getattr(module_data, self.config['data_loader']['type'])(
             self.config['data_loader']['args']['hdf5_path'],
@@ -171,7 +162,9 @@ class HyperOptim():
             shuffle=True,
             validation_split=self.config['data_loader']['args']['validation_split'],
             training=True,
-            num_workers=self.config['data_loader']['args']['num_workers']
+            num_workers=self.config['data_loader']['args']['num_workers'],
+            mean = self.config['data_loader']['args']['mean'],
+            stdev = self.config['data_loader']['args']['stdev']
         )
         valid_data_loader = data_loader.split_validation()
         model = getattr(module_arch, self.config['arch']['type'])(
@@ -182,10 +175,12 @@ class HyperOptim():
         loss = getattr(module_loss, self.config['loss']) #looks in model/loss.py for criterion function specified in config
         criterion = loss(data_loader.dataset.weight.to(self.device)) # for imbalanced datasets
         
-        optimizer = getattr(torch.optim, self.config['optimizer']['type'])(trainable_params, lr = self.config['optimizer']['args']['lr'] * rand_params["batch_size"] / 64, momentum = rand_params["momentum"], weight_decay = rand_params["weight_decay"], nesterov= True)
+        #optimizer = getattr(torch.optim, self.config['optimizer']['type'])(trainable_params, lr = rand_params["lr"], weight_decay = rand_params["weight_decay"], amsgrad = True)
+
+        optimizer = getattr(torch.optim, self.config['optimizer']['type'])(trainable_params, lr = rand_params["lr"], weight_decay = rand_params["weight_decay"], nesterov = True, momentum = rand_params["momentum"])
         
-        lr_scheduler = getattr(torch.optim.lr_scheduler, self.config['lr_scheduler']['type'])(optimizer, step_size = rand_params["step_size"], gamma = rand_params["gamma"])
-        metrics = [getattr(module_metric, met) for met in self.config['metrics']]\
+        lr_scheduler = getattr(torch.optim.lr_scheduler, self.config['lr_scheduler']['type'])(optimizer, factor = rand_params["factor"], patience = int(rand_params["patience"]))
+        metrics = [getattr(module_metric, met) for met in self.config['metrics']]
         
         
         #not sure if i can use this bc num epochs is defined in config
@@ -212,6 +207,8 @@ class HyperOptim():
         trainer.epochs = r_i #adjust number of epochs accordingly
         trainer.train()
         val_loss = trainer.val_loss
+        with open("optimization_raw.txt", "a") as myfile:
+            myfile.write("Loss:" + str(val_loss) +" Epoch:" + str(r_i) + "   " + repr(rand_params)+'\n\n')
         return val_loss 
         
         

@@ -55,21 +55,28 @@ class Translate:
         return m 
 
 class Downsample:
-    def __init__(self,random_state, factor = 2.0, order = 3):
+    def __init__(self,random_state, factor = 2.0, order = 0, execution_prob = 0.3):
+        if factor == 999:
+            factor = random_state.uniform(1.5, 3.0)
         self.factor = 1.0 / factor
         self.order = order
+        self.rs = random_state
+        self.execution_prob = execution_prob
         '''
         downsamples by a factor and then resizes image to match the original input
         '''
     def __call__(self, m):
         assert m.ndim in [3, 4], 'Supports only 3D (DxHxW) or 4D (CxDxHxW) images'
         original_shape = m.shape
-        new_array = zoom(m, self.factor, order=self.order) #reduce dimensions e.g. 32x32 --> 16x16
+        new_array = zoom(m, (1, self.factor, self.factor), order=self.order) #reduce dimensions e.g. 32x32 --> 16x16
         new_factor = [0,0,0]
         for i in range(m.ndim):
             new_factor[i] = m.shape[i] / new_array.shape[i]
-        downsampled_array = zoom(new_array, tuple(new_factor), order=self.order) #16x16--> 32x32
-        return downsampled_array 
+        if self.rs.uniform() < self.execution_prob:
+            downsampled_array = zoom(new_array, tuple(new_factor), order=self.order) #16x16--> 32x32
+            return downsampled_array
+        else:
+            return m 
 
 class RandomFlip:
     """
@@ -105,14 +112,16 @@ class RandomRotate90:
     IMPORTANT: assumes DHW axis order (that's why rotation is performed across (1,2) axis)
     """
 
-    def __init__(self, random_state, **kwargs):
+    def __init__(self, random_state, test = False, **kwargs):
         self.random_state = random_state
+        self.test = test
 
     def __call__(self, m):
         assert m.ndim in [3, 4], 'Supports only 3D (DxHxW) or 4D (CxDxHxW) images'
 
         # pick number of rotations at random
         k = self.random_state.randint(0, 4)
+        if self.test: k = 1
         # rotate k times around a given plane
         if m.ndim == 3:
             m = np.rot90(m, k, (1, 2))
@@ -167,7 +176,7 @@ class RandomContrast:
 
     def __call__(self, m):
         if self.random_state.uniform() < self.execution_probability:
-            brightness_factor = self.factor + self.random_state.uniform(high = 0.5)
+            brightness_factor = self.factor + self.random_state.uniform(low = self.factor, high=2-self.factor)
             return np.clip(m * brightness_factor, 0, 255)
 
         return m

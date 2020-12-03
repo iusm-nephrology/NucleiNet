@@ -137,10 +137,22 @@ def main(args):
     
     store.close()       
     with pd.HDFStore(filename) as f:
+        meta_file =os.path.join(args.dir, "meta_" + args.filename + ".txt")
+        keys = list(f.keys())
+        with open(meta_file, "a") as myfile:
+            myfile.write("Successfully created " + filename)
+            myfile.write("\n===============")
+            myfile.write("\n{0} keys in this file: {1}".format(len(keys), keys))
+            myfile.write("\nTraining images: " + str(num_images_train))
+            myfile.write("\nTesting images: " + str(num_images_test))
+            myfile.write("\nTraining image mean = " + str(np.mean(means)) + " and std = " + str(np.mean(stdevs)))
+            myfile.write("\nTesting image mean = " + str(np.mean(means_test)) + " and std = " + str(np.mean(stdevs_test)))
+            for key in class_counter:
+                myfile.write("\nLabel: " + key+"  Number of images: " + str(class_counter[key]))
+
         print()
         print("Successfully created " + filename)
         print("===============")
-        keys = list(f.keys())
         print("{0} keys in this file: {1}".format(len(keys), keys))
         print("Training images: " + str(num_images_train))
         print("Testing images: " + str(num_images_test))

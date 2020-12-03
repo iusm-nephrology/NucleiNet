@@ -84,7 +84,7 @@ class Trainer(BaseTrainer):
             log = {**log, **val_log}
 
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step(val_log['val_loss'])
+            self.lr_scheduler.step(val_log["val_loss"])
 
         return log
 
@@ -121,4 +121,3 @@ class Trainer(BaseTrainer):
             'val_loss': total_val_loss / len(self.valid_data_loader),
             'val_metrics': (total_val_metrics / len(self.valid_data_loader)).tolist()
         }
-

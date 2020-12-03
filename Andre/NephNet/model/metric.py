@@ -1,14 +1,9 @@
 import torch
 import sklearn.metrics as skm
-import torch.nn as nn
 
 '''
 Define new metrics for training here. While all metrics in the config are tracked, only the monitor metric is used for determining the model's best performance
 '''
-
-def MSE(recon_x, x):
-    reconstruction_function = nn.MSELoss(size_average=False)
-    return reconstruction_function(recon_x, x).cpu().detach().numpy()
 
 def accuracy(output, target): #accuracy
     with torch.no_grad():

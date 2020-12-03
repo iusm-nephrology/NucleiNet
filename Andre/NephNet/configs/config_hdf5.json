@@ -1,46 +1,49 @@
 {
-    "name": "3d_all_9class_SGD",
-    "n_gpu": 1,
+    "name": "3d_all_f33f44Combined_SGD_tubules1029",
+    "n_gpu": 2,
     
     "arch": {
         "type": "threeDmodel",
         "args": {
-        "num_classes": 9,
-        "num_feature": 76   
+        "num_classes": 7,
+        "num_feature": 48
         }
     },
     "data_loader": {
         "type": "hdf5_3d_dataloader",
         "args":{
-            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/f33f44combined_noCNT/3d_all/f33f44combined_noCNT_3d_all.h5",
+            "hdf5_path": "/home/awoloshu/Desktop/NephNet/data/tubules_only/3d_all/3d_all_tubules.h5",
             "shape": [7,32,32],
-            "batch_size": 256,
+            "batch_size": 32,
             "shuffle": true,
             "validation_split": 0.15,
-            "num_workers": 0,
+            "num_workers": 32,
             "training": true, 
-            "projected": false
+            "mean": 14.54,
+            "stdev": 17.008
         }
     },
     "data_loader_test": { 
         "type": "hdf5_3d_dataloader",
         "args":{
-            "hdf5_path": "C:/Users/awoloshu/Desktop/datasets/f33f44combined_noCNT/3d_all/f33f44combined_noCNT_3d_all.h5",
+            "hdf5_path": "/home/awoloshu/Desktop/NephNet/data/tubules_only/3d_all/3d_all_tubules.h5",
             "shape": [7,32,32],
-            "batch_size": 64,
+            "batch_size": 256,
             "shuffle": false,
             "validation_split": 0.0,
-            "num_workers": 0,
-            "training": false
+            "num_workers": 16,
+            "training": false,
+            "mean": 15.02,
+            "stdev": 18.408
         }
     },
     "optimizer": {
         "type": "SGD",
         "args":{
-            "lr": 0.016,
-            "weight_decay": 0.006,
-            "momentum": 0.8,
-            "nesterov": true
+            "lr": 0.0023,
+            "weight_decay": 0.0078,
+            "nesterov": true,
+            "momentum": 0.9
         }
     },
     "loss": "cross_entropy_loss",
@@ -48,15 +51,15 @@
         "accuracy", "f1", "balanced_accuracy", "precision", "recall"
     ],
     "lr_scheduler": {
-        "type": "ReduceLROnPlateau",
+        "type": "StepLR",
         "args": {
-            "patience": 8,
-            "factor": 0.29
+            "step_size": 25,
+            "gamma": 0.426
         }
     },
     "trainer": {
-        "epochs":500,
-        "save_dir": "C:/Users/awoloshu/Documents/NephNet/saved/",
+        "epochs":1000,
+        "save_dir": "/home/awoloshu/Desktop/NephNet/saved/",
         "save_period": 100,
         "verbosity": 1,
         
