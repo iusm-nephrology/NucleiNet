@@ -4,8 +4,10 @@ import json
 import logging
 import datetime
 import torch
+import time
 from utils.util import ensure_dir
 from utils.visualization import WriterTensorboardX
+import torch.distributed as dist
 
 
 class BaseTrainer:
@@ -21,7 +23,11 @@ class BaseTrainer:
         self.device, device_ids = self._prepare_device(config['n_gpu'])
         self.model = model.to(self.device)
         if len(device_ids) > 1:
-            self.model = torch.nn.parallel.DistributedDataParallel(model, device_ids=device_ids)
+            os.environ['MASTER_ADDR'] = '127.0.0.1'
+            os.environ['MASTER_PORT'] = '3128'
+            #dist.init_process_group('nccl', rank=0, world_size = 4)
+            #self.model = torch.nn.parallel.DistributedDataParallel(model, device_ids=device_ids)
+            self.model = torch.nn.DataParallel(model, device_ids=device_ids)
 
         self.loss = loss
         self.metrics = metrics
@@ -85,8 +91,12 @@ class BaseTrainer:
         """
         Full training logic
         """
+        total_time = 0
+        not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
+            t0 = time.time()
             result = self._train_epoch(epoch)
+            
 
             # save logged informations into log dict
             log = {'epoch': epoch}
@@ -141,6 +151,14 @@ class BaseTrainer:
                     self._save_checkpoint(epoch, save_best=best)
             if best:    
                 self.val_loss = log[self.mnt_metric]
+            elapsed_time = time.time() - t0
+            total_time = total_time + elapsed_time
+            average_epoch_time = (total_time+elapsed_time) / epoch
+            time_remaining = average_epoch_time * (self.epochs - epoch)
+            eta_time = time_remaining + time.time()
+            print("Average time per epoch: " + str(int(average_epoch_time)) + " seconds-----------------|")
+            print("ESTIMATED FINISH AT: " + time.ctime(eta_time)+ "-----------------|")
+        #dist.destroy_process_group()
 
     def _train_epoch(self, epoch):
         """

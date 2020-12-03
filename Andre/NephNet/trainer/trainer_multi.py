@@ -76,7 +76,7 @@ class Trainer(BaseTrainer):
         control_queue = Queue()
         Process(target=enqueue_loader_output, args=(batch_queue, control_queue, self.data_loader)).start()
 
-        for batch_idx, data, target in QueueIterator(self.data_loader):
+        for batch_idx, data, target in QueueIterator(batch_queue):
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.model(data)

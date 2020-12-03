@@ -1,0 +1,123 @@
+Dense info
+
+
+Dense3D(
+  (relu): LeakyReLU(negative_slope=0.01)
+  (low_conv): Conv3d(1, 96, kernel_size=(5, 5, 5), stride=(1, 1, 1), padding=(2, 2, 2))
+  (dense1): Sequential(
+    (0): DenseBlock(
+      (relu): LeakyReLU(negative_slope=0.01)
+      (bn): BatchNorm3d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv1): Conv3d(96, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv2): Conv3d(48, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv3): Conv3d(96, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv4): Conv3d(144, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv5): Conv3d(192, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+  )
+  (dense2): Sequential(
+    (0): DenseBlock(
+      (relu): LeakyReLU(negative_slope=0.01)
+      (bn): BatchNorm3d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv1): Conv3d(192, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv2): Conv3d(48, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv3): Conv3d(96, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv4): Conv3d(144, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (conv5): Conv3d(192, 48, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+  )
+  (t1): Sequential(
+    (0): TransitionBlock(
+      (relu): LeakyReLU(negative_slope=0.01)
+      (bn): BatchNorm3d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv1): Conv3d(240, 192, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+      (pool): AvgPool3d(kernel_size=2, stride=2, padding=0)
+    )
+  )
+  (t2): Sequential(
+    (0): TransitionBlock(
+      (relu): LeakyReLU(negative_slope=0.01)
+      (bn): BatchNorm3d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv1): Conv3d(240, 96, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+      (pool): AvgPool3d(kernel_size=2, stride=2, padding=0)
+    )
+  )
+  (drop): Dropout(p=0.5, inplace=False)
+  (bn): BatchNorm3d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (pre_classifier): Linear(in_features=6144, out_features=512, bias=True)
+  (classifier): Linear(in_features=512, out_features=9, bias=True)
+)
+Trainable parameters: 4851593
+----------------------------------------------------------------
+        Layer (type)               Output Shape         Param #
+================================================================
+            Conv3d-1        [-1, 96, 7, 32, 32]          12,096
+         LeakyReLU-2        [-1, 96, 7, 32, 32]               0
+       BatchNorm3d-3        [-1, 96, 7, 32, 32]             192
+            Conv3d-4        [-1, 48, 7, 32, 32]         124,464
+         LeakyReLU-5        [-1, 48, 7, 32, 32]               0
+            Conv3d-6        [-1, 48, 7, 32, 32]          62,256
+         LeakyReLU-7        [-1, 48, 7, 32, 32]               0
+         LeakyReLU-8        [-1, 96, 7, 32, 32]               0
+            Conv3d-9        [-1, 48, 7, 32, 32]         124,464
+        LeakyReLU-10        [-1, 48, 7, 32, 32]               0
+        LeakyReLU-11       [-1, 144, 7, 32, 32]               0
+           Conv3d-12        [-1, 48, 7, 32, 32]         186,672
+        LeakyReLU-13        [-1, 48, 7, 32, 32]               0
+        LeakyReLU-14       [-1, 192, 7, 32, 32]               0
+           Conv3d-15        [-1, 48, 7, 32, 32]         248,880
+        LeakyReLU-16        [-1, 48, 7, 32, 32]               0
+        LeakyReLU-17       [-1, 240, 7, 32, 32]               0
+       DenseBlock-18       [-1, 240, 7, 32, 32]               0
+           Conv3d-19       [-1, 192, 7, 32, 32]          46,272
+        LeakyReLU-20       [-1, 192, 7, 32, 32]               0
+      BatchNorm3d-21       [-1, 192, 7, 32, 32]             384
+        AvgPool3d-22       [-1, 192, 3, 16, 16]               0
+  TransitionBlock-23       [-1, 192, 3, 16, 16]               0
+      BatchNorm3d-24       [-1, 192, 3, 16, 16]             384
+           Conv3d-25        [-1, 48, 3, 16, 16]         248,880
+        LeakyReLU-26        [-1, 48, 3, 16, 16]               0
+           Conv3d-27        [-1, 48, 3, 16, 16]          62,256
+        LeakyReLU-28        [-1, 48, 3, 16, 16]               0
+        LeakyReLU-29        [-1, 96, 3, 16, 16]               0
+           Conv3d-30        [-1, 48, 3, 16, 16]         124,464
+        LeakyReLU-31        [-1, 48, 3, 16, 16]               0
+        LeakyReLU-32       [-1, 144, 3, 16, 16]               0
+           Conv3d-33        [-1, 48, 3, 16, 16]         186,672
+        LeakyReLU-34        [-1, 48, 3, 16, 16]               0
+        LeakyReLU-35       [-1, 192, 3, 16, 16]               0
+           Conv3d-36        [-1, 48, 3, 16, 16]         248,880
+        LeakyReLU-37        [-1, 48, 3, 16, 16]               0
+        LeakyReLU-38       [-1, 240, 3, 16, 16]               0
+       DenseBlock-39       [-1, 240, 3, 16, 16]               0
+           Conv3d-40        [-1, 96, 3, 16, 16]          23,136
+        LeakyReLU-41        [-1, 96, 3, 16, 16]               0
+      BatchNorm3d-42        [-1, 96, 3, 16, 16]             192
+        AvgPool3d-43          [-1, 96, 1, 8, 8]               0
+  TransitionBlock-44          [-1, 96, 1, 8, 8]               0
+      BatchNorm3d-45          [-1, 96, 1, 8, 8]             192
+           Linear-46                  [-1, 512]       3,146,240
+          Dropout-47                  [-1, 512]               0
+           Linear-48                    [-1, 9]           4,617
+================================================================
+Total params: 4,851,593
+Trainable params: 4,851,593
+Non-trainable params: 0
+----------------------------------------------------------------
+Input size (MB): 0.03
+Forward/backward pass size (MB): 136.74
+Params size (MB): 18.51
+Estimated Total Size (MB): 155.28
+----------------------------------------------------------------
+Using GPU 1/2: TITAN RTX
+Using GPU 2/2: TITAN RTX
+Class: 	s1	Weight: 	1.0807291
+Class: 	s23	Weight: 	1.4974442
+Class: 	tal	Weight: 	1.0
+Class: 	dct	Weight: 	3.1492412
+Class: 	cd	Weight: 	1.207663
+Class: 	cd45	Weight: 	2.3791704
+Class: 	nestin	Weight: 	2.7240405
+Class: 	31glom	Weight: 	3.7580178
+Class: 	31int	Weight: 	1.1624198
+

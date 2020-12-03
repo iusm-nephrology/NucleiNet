@@ -84,7 +84,7 @@ class Trainer(BaseTrainer):
             log = {**log, **val_log}
 
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+            self.lr_scheduler.step(val_log["val_loss"])
 
         return log
 

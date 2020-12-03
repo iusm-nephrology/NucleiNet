@@ -1,0 +1,74 @@
+{
+    "name": "threeD_f33f44f59_combined_3d_all_kfold5",
+    "n_gpu": 2,
+    
+    "arch": {
+        "type": "threeDmodel",
+        "args": {
+        "num_classes": 11,
+        "num_feature": 76
+        }
+    },
+    "data_loader": {
+        "type": "hdf5_3d_dataloader",
+        "args":{
+            "hdf5_path": "/home/awoloshu/Desktop/NephNet/data/NephNet v0.1 Dataset/kfold_validation_3d_all/validation_fold_5.h5",
+            "shape": [7,32,32],
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.15,
+            "num_workers": 32,
+            "training": true, 
+            "mean": 17.71,
+            "stdev": 20.62
+        }
+    },
+    "data_loader_test": { 
+        "type": "hdf5_3d_dataloader",
+        "args":{
+            "hdf5_path": "/home/awoloshu/Desktop/NephNet/data/NephNet v0.1 Dataset/kfold_validation_3d_all/validation_fold_5.h5",
+            "shape": [7,32,32],
+            "batch_size": 128,
+            "shuffle": false,
+            "validation_split": 0.0,
+            "num_workers": 16,
+            "training": false,
+            "mean": 17.71,
+            "stdev": 20.62
+        }
+    },
+    "optimizer": {
+        "type": "SGD",
+        "args":{
+            "lr": 0.008,
+            "momentum": 0.8,
+            "weight_decay": 0.006,
+            "nesterov": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "accuracy", "f1", "balanced_accuracy", "precision", "recall"
+    ],
+    "lr_scheduler": {
+        "type": "ReduceLROnPlateau",
+        "args": {
+            "factor": 0.29,
+            "patience": 15,
+            "min_lr": 1e-6
+        }
+    },
+    "trainer": {
+        "epochs":1000,
+        "save_dir": "/home/awoloshu/Desktop/NephNet/saved/",
+        "save_period": 100,
+        "verbosity": 1,
+        
+        "monitor": "min val_loss",
+        "early_stop": 1000,
+        
+        "tensorboardX": false,
+        "log_dir": "../saved/runs"
+    }
+}
+

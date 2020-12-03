@@ -10,19 +10,21 @@ import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
-from trainer import Trainer
+from trainer.trainer import Trainer
 from utils import Logger
 from utils import util
 from utils import torchsummary
 from utils import viewTraining
 from utils import lr_finder
 from utils import classActivationMap
+import utils.adabound as adabound
 import importlib
 import math
 import torchvision
 from torch.nn import functional as F
 from torch import topk
 import skimage.transform
+import torch.multiprocessing as mp
 print("Modules loaded")
 
 
@@ -32,8 +34,12 @@ def get_instance(module, name, config, *args):
 
 def main(config, resume):
     torch.backends.cudnn.benchmark = True
+    #torch.set_num_threads(16)
+    #print("Using 16 of " + str(torch.get_num_threads()) + " threads")
     print("GPUs available: " + str(torch.cuda.device_count()))
     os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+    os.environ["NUMEXPR_MAX_THREADS"] = "16"
+    os.environ["OMP_NUM_THREADS"] = "16"
     train_logger = Logger()
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,7 +52,8 @@ def main(config, resume):
     print(model)
     
     if torch.cuda.is_available():
-        print("Using GPU: " + torch.cuda.get_device_name(0))
+        for gp in range(torch.cuda.device_count()):
+            print("Using GPU " + str(gp+1) + "/" + str(torch.cuda.device_count()) + ": " + torch.cuda.get_device_name(gp))
     else:
         print("Using CPU to train")
         
@@ -54,10 +61,17 @@ def main(config, resume):
     loss = getattr(module_loss, config['loss']) #looks in model/loss.py for criterion function specified in config
     criterion = loss(data_loader.dataset.weight.to(device)) # for imbalanced datasets
     metrics = [getattr(module_metric, met) for met in config['metrics']]
+    classes = ['s1', 's23', 'tal', 'dct', 'cd', 'cd45_0', 'nestin', '31glom', 'cd31int', 'cd45_1', 'cd45_2']
+    #classes = ['s1', 's23', 'tal', 'dct', 'cd', 'cd45', 'nestin', '31glom', 'cd31int']
+    for i in range(len(classes)):
+        print("Class: \t" + classes[i] + "\tWeight: \t" + str(data_loader.dataset.weight.cpu().detach().numpy()[i]))    
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
+    if config['optimizer']['type'] == "adabound":
+        optimizer = getattr(adabound, "AdaBound")(trainable_params, **config['optimizer']['args'])
+    else:
+        optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
     lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', config, optimizer)
 
     trainer = Trainer(model, criterion, metrics, optimizer,
@@ -67,7 +81,6 @@ def main(config, resume):
                       valid_data_loader=valid_data_loader,
                       lr_scheduler=lr_scheduler,
                       train_logger=train_logger)
-
     trainer.train()
 
 

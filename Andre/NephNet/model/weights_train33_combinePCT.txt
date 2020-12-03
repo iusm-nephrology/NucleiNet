@@ -1,0 +1,21 @@
+weight info 
+
+Params size (MB): 48.11
+Estimated Total Size (MB): 80.11
+----------------------------------------------------------------
+Using GPU 1/2: TITAN RTX
+Using GPU 2/2: TITAN RTX
+Class: 	s1	Weight: 	1.0
+Class: 	s23	Weight: 	1.0
+Class: 	tal	Weight: 	1.4430885
+Class: 	dct	Weight: 	3.0228295
+Class: 	cd	Weight: 	3.0291607
+Class: 	cd45_0	Weight: 	1.7038513
+Class: 	nestin	Weight: 	3.9178996
+Class: 	31glom	Weight: 	6.753592
+Class: 	cd31int	Weight: 	1.4215938
+Class: 	cd45_1	Weight: 	1.7038513
+Class: 	cd45_2	Weight: 	1.7038513
+Class: 	cd45_3	Weight: 	1.7038513
+Class: 	cd45_4	Weight: 	1.7038513
+

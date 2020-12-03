@@ -1,0 +1,68 @@
+{
+    "name": "3d_all_multi",
+    "n_gpu": 2,
+    
+    "arch": {
+        "type": "threeDmodel",
+        "args": {
+        "num_classes": 9,
+        "num_feature": 32
+        }
+    },
+    "data_loader": {
+        "type": "hdf5_3d_dataloader",
+        "args":{
+            "hdf5_path": "/home/awoloshu/Desktop/CellTemplate/data/F33_cortex/3d_all_multi.h5",
+            "shape": [7,32,32],
+            "batch_size": 64,
+            "shuffle": true,
+            "validation_split": 0.15,
+            "num_workers": 8,
+            "training": true
+        }
+    },
+    "data_loader_test": { 
+        "type": "hdf5_3d_dataloader",
+        "args":{
+            "hdf5_path": "/home/awoloshu/Desktop/CellTemplate/data/F33_cortex/3D_all.h5",
+            "shape": [7,32,32],
+            "batch_size": 64,
+            "shuffle": false,
+            "validation_split": 0.0,
+            "num_workers": 0,
+            "training": false
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001,
+            "weight_decay": 0.0001607,
+            "amsgrad": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "accuracy", "f1", "balanced_accuracy", "precision", "recall"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 400,
+            "gamma": 0.5
+        }
+    },
+    "trainer": {
+        "epochs":500,
+        "save_dir": "/home/awoloshu/Desktop/CellTemplate/saved/",
+        "save_period": 100,
+        "verbosity": 1,
+        
+        "monitor": "min val_loss",
+        "early_stop": 500,
+        
+        "tensorboardX": false,
+        "log_dir": "../saved/runs"
+    }
+}
+

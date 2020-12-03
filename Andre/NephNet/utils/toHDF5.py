@@ -59,11 +59,17 @@ def main(args):
             #print(ids.dtype)
             #print(type(pd.DataFrame(ids).index[0]))
             store.append('test_ids', pd.DataFrame(ids))
-            
+        
+        pix_length = len(csv_data.iloc[0, img_start:])
+        if pix_length != 7168:
+            print("Image is {} pixels long, changing to 7168 pixels".format(pix_length))
+            img_end = -1
+        else:
+            img_end = pix_length + img_start
         #todo add warning
-        train_img = csv_data.iloc[train_ind,img_start:].dropna(axis=0).dropna(axis=1).astype('int64') #first column is label
+        train_img = csv_data.iloc[train_ind,img_start:img_end].dropna(axis=0).dropna(axis=1).astype('int64') #first column is label
         train_label = csv_data.iloc[train_ind,0].dropna(axis=0).astype('int64')
-        test_img = csv_data.iloc[test_ind,img_start:].dropna(axis=0).dropna(axis=1).astype('int64') #first column is label
+        test_img = csv_data.iloc[test_ind,img_start:img_end].dropna(axis=0).dropna(axis=1).astype('int64') #first column is label
         test_label = csv_data.iloc[test_ind,0].dropna(axis=0).astype('int64')
         
         
@@ -72,14 +78,14 @@ def main(args):
         #test_img.infer_objects()
         #print(train_img.dtypes)
         
-        if (train_img.min() < 0).any(): #convert signed to unsigned bytes
+        if (train_img.min() < 0).any() or (test_img.min() < 0).any(): #convert signed to unsigned bytes
+            print("CONVERTING SIGNED TO UNSIGNED BYTES")
             train_img = train_img + 0
             test_img = test_img+0
             mask = train_img < 0
             train_img[mask] = train_img + 256
             mask = test_img < 0
             test_img[mask] = test_img + 256
-            
         print(train_img.shape)
         print(test_img.shape)
         
@@ -131,10 +137,22 @@ def main(args):
     
     store.close()       
     with pd.HDFStore(filename) as f:
+        meta_file =os.path.join(args.dir, "meta_" + args.filename + ".txt")
+        keys = list(f.keys())
+        with open(meta_file, "a") as myfile:
+            myfile.write("Successfully created " + filename)
+            myfile.write("\n===============")
+            myfile.write("\n{0} keys in this file: {1}".format(len(keys), keys))
+            myfile.write("\nTraining images: " + str(num_images_train))
+            myfile.write("\nTesting images: " + str(num_images_test))
+            myfile.write("\nTraining image mean = " + str(np.mean(means)) + " and std = " + str(np.mean(stdevs)))
+            myfile.write("\nTesting image mean = " + str(np.mean(means_test)) + " and std = " + str(np.mean(stdevs_test)))
+            for key in class_counter:
+                myfile.write("\nLabel: " + key+"  Number of images: " + str(class_counter[key]))
+
         print()
         print("Successfully created " + filename)
         print("===============")
-        keys = list(f.keys())
         print("{0} keys in this file: {1}".format(len(keys), keys))
         print("Training images: " + str(num_images_train))
         print("Testing images: " + str(num_images_test))
